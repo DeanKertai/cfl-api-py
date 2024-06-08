@@ -1,0 +1,32 @@
+# Quarterbacks
+BC	ADAMS JR., Vernon
+EDM	BETHEL THOMPSON, McLeod
+SSK	HARRIS, Trevor
+WPG	COLLAROS, Zach
+MTL	FAJARDO, Cody
+
+# Running Backs
+EDM	BROWN, Kevin
+SSK	OULLETTE, A. J.
+WPG	OLIVEIRA, Brady
+TOR	CAREY, Ka'Deem
+HAM	BUTLER, James
+OTW	WILLIAMS, Devonte
+
+# Receivers
+BC	COTTOY, Jevon
+BC	HATCHER, Keon
+EDM	LEWIS, Eugene
+CAL	PHILPOT, Jalen
+SSK	SCHAFFER-BAKER, Kian
+SSK	AJOU, Ajou
+SSK	EMILUS, Samuel
+SSK	BANE, Shawn
+SSK	STERNS, Jereth
+WPG	DEMSKI, Nic
+WPG	SCHOEN, Dalton
+WPG	LAWLER, Kenny
+TOR	BAILEY, Rasheed
+HAM	HAKUNAVANHU, Luther
+HAM	WHITE, Tim
+OTW	RHYMES, Dominique
