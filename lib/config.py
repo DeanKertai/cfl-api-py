@@ -28,7 +28,7 @@ column_description: Dict[str, ColumnDescription] = {
 	'url': {
 		'description': 'Link to the player profile on cfl.ca',
 		'type': 'str',
-		'pertinent': False
+		'pertinent': True
 	},
 	'team': {
 		'description': 'Team name',
