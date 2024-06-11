@@ -8,7 +8,7 @@ def load_all_players() -> List[Player]:
 	:return: A list of players.
 	"""
 	qb = load_player_list('picks/qb.txt', Position.QB)
-	rb = load_player_list('picks/prb.txt', Position.RB)
+	rb = load_player_list('picks/rb.txt', Position.RB)
 	wr = load_player_list('picks/wr.txt', Position.WR)
 	kickers = load_player_list('picks/kickers.txt', Position.KICKER)
 	defence = load_player_list('picks/defence.txt', Position.DEFENCE)
