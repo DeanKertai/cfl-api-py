@@ -6,7 +6,6 @@ from lib.config import Category
 SEASON_YEAR = 2024
 
 if __name__ == '__main__':
-	picked_players = load_all_players()
 
 	db = PlayerDB()
 	for category in Category:
@@ -14,6 +13,9 @@ if __name__ == '__main__':
 		for player_cols in player_rows:
 			db.upsert(category, player_cols)
 	print(f'Added {db.size()} players to the database')
+
+	picked_players = load_all_players()
+	db.set_picked_players(picked_players)
 
 	db.save_csv(Category.Passing, 'output/passing.csv')
 	db.save_csv(Category.Rushing, 'output/rushing.csv')

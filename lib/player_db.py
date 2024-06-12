@@ -1,7 +1,7 @@
 from typing import List, TypedDict, Dict, Any
 from lib import config
 from lib.config import Category, Stat, StatType, output_csv_cols, column_types
-from lib.player import get_id_from_url
+from lib.player import Player, get_id_from_url
 
 class DbItem(TypedDict):
 	player_id: int
@@ -13,6 +13,7 @@ class DbItem(TypedDict):
 class PlayerDB:
 	def __init__(self) -> None:
 		self.list: List[DbItem] = []
+		self.picked_players: List[Player] = []
 
 	def get_by_id(self, player_id: int) -> DbItem:
 		"""
@@ -62,21 +63,29 @@ class PlayerDB:
 		"""
 		return len(self.list)
 	
+	def set_picked_players(self, picked: List[Player]):
+		"""
+		Sets the list of picked players.
+		"""
+		self.picked_players = picked
+	
 	def save_csv(self, category: Category, filename: str) -> None:
 		"""
 		Saves a CSV file in a format compatible with our family pool points
 		spreadsheet, including all players for the specified category.
 		"""
-		filtered = [player for player in self.list if player['category'] == category]
-		filtered.sort(key=lambda x: (x['team'], x['name']))
+		if len(self.picked_players) == 0:
+			raise ValueError('Picked players must be set before saving to CSV')
+		filtered = [player for player in self.picked_players if player['category'] == category]
 		output_columns = output_csv_cols[category]
 		with open(filename, 'w') as file:
-
 			for stat in output_columns:
 				column_name = stat.value
 				file.write(f"{column_name},")
 			file.write("\n")
 			for player in filtered:
+				if not self.has_player(player['id']):
+					continue
 				for stat in output_columns:
 					stat_value = self.get_stat(player['id'], stat)
 					stat_type = column_types[stat]
