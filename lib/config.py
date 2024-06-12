@@ -52,6 +52,7 @@ column_types: Dict[Stat, StatType] = {
 	Stat.Name: StatType.Str,
 	Stat.Url: StatType.Str,
 	Stat.Team: StatType.Str,
+	Stat.Position: StatType.Str,
 	Stat.PassingCompletions: StatType.Int,
 	Stat.PassingYards: StatType.Float,
 	Stat.PassingTD: StatType.Int,
