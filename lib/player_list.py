@@ -1,5 +1,6 @@
 from typing import List
-from lib.player import Player, Position
+from lib.config import Category
+from lib.player import Player
 
 
 def load_all_players() -> List[Player]:
@@ -7,17 +8,16 @@ def load_all_players() -> List[Player]:
 	Loads all players from the player list.
 	:return: A list of players.
 	"""
-	qb = load_player_list('picks/qb.txt', Position.QB)
-	rb = load_player_list('picks/rb.txt', Position.RB)
-	wr = load_player_list('picks/wr.txt', Position.WR)
-	kickers = load_player_list('picks/kickers.txt', Position.KICKER)
-	defence = load_player_list('picks/defence.txt', Position.DEFENCE)
+	qb = load_player_list('picks/qb.txt', Category.Passing)
+	rb = load_player_list('picks/rb.txt', Category.Rushing)
+	wr = load_player_list('picks/wr.txt', Category.Receiving)
+	kickers = load_player_list('picks/kickers.txt', Category.FieldGoals)
+	defence = load_player_list('picks/defence.txt', Category.Defence)
 	return qb + rb + wr + kickers + defence
 
-def load_player_list(file_path: str, pos: Position) -> List[Player]:
+def load_player_list(file_path: str, category: Category) -> List[Player]:
 	"""
 	Loads the player list from the specified file.
-	:param file_path: The path to the file containing the player list.
 	:return: A list of players.
 	"""
 	players: List[Player] = []
@@ -31,7 +31,7 @@ def load_player_list(file_path: str, pos: Position) -> List[Player]:
 				'id': int(id),
 				'team': team,
 				'name': name,
-				'position': pos
+				'category': category
 			}
 			players.append(player)
 	return players

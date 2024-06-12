@@ -1,18 +1,12 @@
 from enum import Enum
 from typing import TypedDict
-
-class Position(Enum):
-	QB = 'QB'
-	RB = 'RB'
-	WR = 'WR'
-	KICKER = 'KICKER'
-	DEFENCE = 'DEFENCE'
+from lib.config import Category
 
 class Player(TypedDict):
 	id: int
 	team: str
 	name: str
-	position: Position
+	category: Category
 
 def get_id_from_url(url: str) -> int:
 	"""

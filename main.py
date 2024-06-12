@@ -5,7 +5,6 @@ from lib.config import Category
 
 SEASON_YEAR = 2024
 
-
 if __name__ == '__main__':
 	picked_players = load_all_players()
 
@@ -29,8 +28,8 @@ if __name__ == '__main__':
 		if not db.has_player(player['id']):
 			not_found.append(player)
 	
-	# Sort by team, then position, then name
-	not_found.sort(key=lambda x: (x['team'], x['position'].value, x['name']))
+	# Sort by team, then category, then name
+	not_found.sort(key=lambda x: (x['team'], x['category'].value, x['name']))
 
 	if len(not_found) > 0:
 		print(f'WARNING! {len(not_found)} picked players were not found in the API response')
@@ -38,5 +37,6 @@ if __name__ == '__main__':
 			id = player['id']
 			team = player['team']
 			name = player['name']
-			pos = player['position'].value
-			print(f'{id} - {team} - {pos} - {name}')
+			category = player['category'].value
+			print(f'{id} - {team} - {category} - {name}')
+
