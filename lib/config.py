@@ -1,366 +1,208 @@
-from typing import TypedDict, Literal, Dict, List
+from enum import Enum
+from typing import Dict, List
 
-base_url = 'https://www.cfl.ca/wp-content/themes/cfl.ca/inc/admin-ajax.php?action=get_league_stats'
-rate_limit_interval = 1  # seconds
 
-class ColumnDescription(TypedDict):
-	description: str
-	type: Literal['int', 'float', 'str']
+class Category(Enum):
+	Passing = 'passing'
+	Rushing = 'rushing'
+	Receiving = 'receiving'
+	Defence = 'defence'
+	FieldGoals = 'field_goals'
 
-	# Whether or not this column is needed for our family pool
-	pertinent: bool
+# Map of Category to the query param name in the CFL stats API
+category_api_names: Dict[Category, str] = {
+	Category.Passing: 'passing',
+	Category.Rushing: 'rushing',
+	Category.Receiving: 'receiving',
+	Category.Defence: 'defence',
+	Category.FieldGoals: 'field_goals',
+}
 
-# This dictionary describes all of the different statistics that are returned
-# by the API. The CFL API returns everything as simple lists of values, so we
-# have to define this manually
-column_description: Dict[str, ColumnDescription] = {
-	# Global
-	'date': {
-		'description': 'The season/year of the statistic',
-		'type': 'int',
-		'pertinent': False
-	},
-	'name': {
-		'description': 'Player name',
-		'type': 'str',
-		'pertinent': True
-	},
-	'url': {
-		'description': 'Link to the player profile on cfl.ca',
-		'type': 'str',
-		'pertinent': True
-	},
-	'team': {
-		'description': 'Team name',
-		'type': 'str',
-		'pertinent': True
-	},
-	'gp': {
-		'description': 'Games played',
-		'type': 'int',
-		'pertinent': True
-	},
+class StatType(Enum):
+	Str = 'str'
+	Int = 'int'
+	Float = 'float'
 
-	# Passing
-	'passing_comp': {
-		'description': 'Number of complete passes',
-		'type': 'int',
-		'pertinent': True
-	},
-	'passing_att': {
-		'description': 'Number of attempted passes',
-		'type': 'int',
-		'pertinent': True
-	},
-	'passing_pct': {
-		'description': 'Percent of completed passes',
-		'type': 'float',
-		'pertinent': False
-	},
-	'passing_yds': {
-		'description': 'Passing yards',
-		'type': 'float',
-		'pertinent': True
-	},
-	'passing_td': {
-		'description': 'Passing touchdowns',
-		'type': 'int',
-		'pertinent': True
-	},
-	'passing_int': {
-		'description': 'Interceptions',
-		'type': 'int',
-		'pertinent': True
-	},
-	'passing_effic': {
-		'description': 'Passer rating',
-		'type': 'float',
-		'pertinent': False
-	},
-	'passing_int_pct': {
-		'description': 'Interception percentage',
-		'type': 'float',
-		'pertinent': False
-	},
-	'passing_avg': {
-		'description': 'Average passing yards',
-		'type': 'float',
-		'pertinent': False
-	},
+class Stat(Enum):
+	NoOp = 'noop'  # For columns we don't care about
+	Date = 'date'
+	Name = 'name'
+	Url = 'url'
+	Team = 'team'
+	Position = 'position'
+	PassingCompletions = 'passing_comp'
+	PassingYards = 'passing_yds'
+	PassingTD = 'passing_td'
+	RushingYards = 'rushing_yds'
+	RushingTD = 'rushing_td'
+	ReceivingYards = 'receiving_yds'
+	ReceivingTD = 'receiving_td'
+	FieldGoalsMade = 'field_goals_md'
+	FieldGoalsSingles = 'field_goals_s'
+	FieldGoalsConvert1Point = 'field_goals_c1_md'
+	DefenceTackles = 'defence_dt'
+	DefenceSacks = 'defence_qs'
+	DefenceInterceptions = 'defence_int'
+	DefenceForcedFumbles = 'defence_ff'
 
-	# Rushing
-	'rushing_car': {
-		'description': 'Number of carries',
-		'type': 'int',
-		'pertinent': True
-	},
-	'rushing_yds': {
-		'description': 'Rushing yards',
-		'type': 'int',
-		'pertinent': True
-	},
-	'rushing_avg': {
-		'description': 'Average rushing yards',
-		'type': 'float',
-		'pertinent': False
-	},
-	'rushing_lg': {
-		'description': 'Longest rush',
-		'type': 'int',
-		'pertinent': False
-	},
-	'rushing_td': {
-		'description': 'Rushing touchdowns',
-		'type': 'int',
-		'pertinent': True
-	},
-	'rushing_ten': {
-		'description': 'Rushing first downs',
-		'type': 'int',
-		'pertinent': False
-	},
-	'rushing_twenty': {
-		'description': 'Rushing plays of 20+ yards',
-		'type': 'int',
-		'pertinent': False
-	},
 
-	# Receiving
-	'receiving_rec': {
-		'description': 'Receptions',
-		'type': 'int',
-		'pertinent': True
-	},
-	'receiving_yds': {
-		'description': 'Receiving yards',
-		'type': 'int',
-		'pertinent': True
-	},
-	'receiving_yac': {
-		'description': 'Yards after catch',
-		'type': 'int',
-		'pertinent': False
-	},
-	'receiving_avg': {
-		'description': 'Average receiving yards',
-		'type': 'float',
-		'pertinent': False
-	},
-	'receiving_lg': {
-		'description': 'Longest reception',
-		'type': 'int',
-		'pertinent': False
-	},
-	'receiving_td': {
-		'description': 'Receiving touchdowns',
-		'type': 'int',
-		'pertinent': True
-	},
-	'receiving_thirty': {
-		'description': 'Receptions of 30+ yards',
-		'type': 'int',
-		'pertinent': False
-	},
-	'receiving_tgts': {
-		'description': 'Targets',
-		'type': 'int',
-		'pertinent': True
-	},
-
-	# Defence
-	'defence_tt': {
-		'description': 'Total tackles',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_dt': {
-		'description': 'Defensive tackles',
-		'type': 'int',
-		'pertinent': True
-	},
-	'defence_st': {
-		'description': 'Special teams tackles',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_tlf': {
-		'description': 'Tackles for loss',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_qs': {
-		'description': 'Quarterback sacks',
-		'type': 'int',
-		'pertinent': True
-	},
-	'defence_int': {
-		'description': 'Interceptions',
-		'type': 'int',
-		'pertinent': True
-	},
-	'defence_int_yds': {
-		'description': 'Interception yards',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_int_lg': {
-		'description': 'Longest interception return',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_int_td': {
-		'description': 'Interception touchdowns',
-		'type': 'int',
-		'pertinent': True
-	},
-	'defence_ff': {
-		'description': 'Forced fumbles',
-		'type': 'int',
-		'pertinent': True
-	},
-	'defence_fr': {
-		'description': 'Fumble recoveries',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_fr_yds': {
-		'description': 'Fumble recovery yards',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_fr_lg': {
-		'description': 'Longest fumble recovery',
-		'type': 'int',
-		'pertinent': False
-	},
-	'defence_fr_td': {
-		'description': 'Fumble recovery touchdowns',
-		'type': 'int',
-		'pertinent': True
-	},
-
-	# Kickers
-	'field_goals_fga': {
-		'description': 'Field goals attempted',
-		'type': 'int',
-		'pertinent': False
-	},
-	'field_goals_md': {
-		'description': 'Field goals made',
-		'type': 'int',
-		'pertinent': True
-	},
-	'field_goals_pct': {
-		'description': 'Field goal percentage',
-		'type': 'float',
-		'pertinent': False
-	},
-	'field_goals_lg': {
-		'description': 'Longest field goal',
-		'type': 'int',
-		'pertinent': False
-	},
-	'field_goals_s': {
-		'description': 'Singles',
-		'type': 'int',
-		'pertinent': True
-	},
-	'field_goals_c1_att': {
-		'description': 'Convert 1-point attempts',
-		'type': 'int',
-		'pertinent': False
-	},
-	'field_goals_c1_md': {
-		'description': 'Convert 1-point made',
-		'type': 'int',
-		'pertinent': True
-	},
+column_types: Dict[Stat, StatType] = {
+	Stat.NoOp: StatType.Str,
+	Stat.Date: StatType.Int,
+	Stat.Name: StatType.Str,
+	Stat.Url: StatType.Str,
+	Stat.Team: StatType.Str,
+	Stat.PassingCompletions: StatType.Int,
+	Stat.PassingYards: StatType.Float,
+	Stat.PassingTD: StatType.Int,
+	Stat.RushingYards: StatType.Float,
+	Stat.RushingTD: StatType.Int,
+	Stat.ReceivingYards: StatType.Int,
+	Stat.ReceivingTD: StatType.Int,
+	Stat.FieldGoalsMade: StatType.Int,
+	Stat.FieldGoalsConvert1Point: StatType.Int,
+	Stat.DefenceTackles: StatType.Int,
+	Stat.DefenceSacks: StatType.Int,
+	Stat.DefenceInterceptions: StatType.Int,
+	Stat.DefenceForcedFumbles: StatType.Int,
 }
 
 # This dictionary contains the columns (and their order) as they are returned by the
 # CFL API for each category. Unfortunately the CFL API returns data as a simple list
 # of values, so this will need to be updated if they ever add/remove columns or change
 # the order in which they are returned.
-# The column names listed must match the keys in the `column_description` dictionary
-cfl_api_columns: Dict[str, List[str]] = {
-	'passing': [
-		'date',
-		'name',
-		'url',
-		'team',
-		'gp',
-		'passing_comp',
-		'passing_att',
-		'passing_pct',
-		'passing_yds',
-		'passing_td',
-		'passing_int',
-		'passing_effic',
-		'passing_int_pct',
-		'passing_avg',
+cfl_api_columns: Dict[Category, List[Stat]] = {
+	Category.Passing: [
+		Stat.Date,
+		Stat.Name,
+		Stat.Url,
+		Stat.Team,
+		Stat.NoOp, # gp
+		Stat.PassingCompletions,
+		Stat.NoOp, # passing_att
+		Stat.NoOp, # passing_pct
+		Stat.PassingYards,
+		Stat.PassingTD,
+		Stat.NoOp, # passing_int
+		Stat.NoOp, # passing_effic
+		Stat.NoOp, # passing_int_pct
+		Stat.NoOp, # passing_avg
 	],
-	'rushing': [
-		'date',
-		'name',
-		'url',
-		'team',
-		'gp',
-		'rushing_car',
-		'rushing_yds',
-		'rushing_avg',
-		'rushing_lg',
-		'rushing_td',
-		'rushing_ten',
-		'rushing_twenty',
+	Category.Rushing: [
+		Stat.Date,
+		Stat.Name,
+		Stat.Url,
+		Stat.Team,
+		Stat.NoOp, # gp
+		Stat.NoOp, # rushing_car
+		Stat.RushingYards,
+		Stat.NoOp, # rushing_avg
+		Stat.NoOp, # rushing_lg
+		Stat.RushingTD,
+		Stat.NoOp, # rushing_ten
+		Stat.NoOp, # rushing_twenty
 	],
-	'receiving': [
-		'date',
-		'name',
-		'url',
-		'team',
-		'gp',
-		'receiving_rec',
-		'receiving_yds',
-		'receiving_yac',
-		'receiving_avg',
-		'receiving_lg',
-		'receiving_td',
-		'receiving_thirty',
-		'receiving_tgts',
+	Category.Receiving: [
+		Stat.Date,
+		Stat.Name,
+		Stat.Url,
+		Stat.Team,
+		Stat.NoOp, # gp
+		Stat.NoOp, # receiving_rec
+		Stat.ReceivingYards,
+		Stat.NoOp, # receiving_yac
+		Stat.NoOp, # receiving_avg
+		Stat.NoOp, # receiving_lg
+		Stat.ReceivingTD,
+		Stat.NoOp, # receiving_thirty
+		Stat.NoOp, # receiving_tgts
 	],
-	'defence': [
-		'date',
-		'name',
-		'url',
-		'team',
-		'gp',
-		'defence_tt',
-		'defence_dt',
-		'defence_st',
-		'defence_tlf',
-		'defence_qs',
-		'defence_int',
-		'defence_int_yds',
-		'defence_int_lg',
-		'defence_int_td',
-		'defence_ff',
-		'defence_fr',
-		'defence_fr_yds',
-		'defence_fr_lg',
-		'defence_fr_td',
+	Category.Defence: [
+		Stat.Date,
+		Stat.Name,
+		Stat.Url,
+		Stat.Team,
+		Stat.NoOp, # gp
+		Stat.NoOp, # defence_tt
+		Stat.DefenceTackles,
+		Stat.NoOp, # defence_st
+		Stat.NoOp, # defence_tlf
+		Stat.DefenceSacks,
+		Stat.DefenceInterceptions,
+		Stat.NoOp, # defence_int_yds
+		Stat.NoOp, # defence_int_lg
+		Stat.NoOp, # defence_int_td
+		Stat.DefenceForcedFumbles,
+		Stat.NoOp, # defence_fr
+		Stat.NoOp, # defence_fr_yds
+		Stat.NoOp, # defence_fr_lg
+		Stat.NoOp, # defence_fr_td
 	],
-	'field_goals': [
-		'date',
-		'name',
-		'url',
-		'team',
-		'gp',
-		'field_goals_fga',
-		'field_goals_md',
-		'field_goals_pct',
-		'field_goals_lg',
-		'field_goals_s',
-		'field_goals_c1_att',
-		'field_goals_c1_md',
+	Category.FieldGoals: [
+		Stat.Date,
+		Stat.Name,
+		Stat.Url,
+		Stat.Team,
+		Stat.NoOp, # gp
+		Stat.NoOp, # field_goals_fga
+		Stat.FieldGoalsMade,
+		Stat.NoOp, # field_goals_pct
+		Stat.NoOp, # field_goals_lg
+		Stat.NoOp, # field_goals_s
+		Stat.NoOp, # field_goals_c1_att
+		Stat.FieldGoalsConvert1Point,
+	],
+}
+
+# Map of Category to the columns we care about for our output CSV
+output_csv_cols: Dict[Category, List[Stat]] = {
+	Category.Passing: [
+		Stat.Name,
+		Stat.Team,
+		Stat.Position,
+		Stat.PassingYards,
+		Stat.PassingTD,
+		Stat.ReceivingYards,
+		Stat.ReceivingTD,
+		Stat.RushingYards,
+		Stat.RushingTD,
+	],
+	Category.Rushing: [
+		Stat.Name,
+		Stat.Team,
+		Stat.Position,
+		Stat.PassingYards,
+		Stat.PassingTD,
+		Stat.ReceivingYards,
+		Stat.ReceivingTD,
+		Stat.RushingYards,
+		Stat.RushingTD,
+	],
+	Category.Receiving: [
+		Stat.Name,
+		Stat.Team,
+		Stat.Position,
+		Stat.PassingYards,
+		Stat.PassingTD,
+		Stat.ReceivingYards,
+		Stat.ReceivingTD,
+		Stat.RushingYards,
+		Stat.RushingTD,
+	],
+	Category.FieldGoals: [
+		Stat.Name,
+		Stat.Team,
+		Stat.Position,
+		Stat.FieldGoalsMade,
+		Stat.FieldGoalsConvert1Point,
+	],
+	Category.Defence: [
+		Stat.Name,
+		Stat.Team,
+		Stat.Position,
+		Stat.DefenceTackles,
+		Stat.DefenceSacks,
+		Stat.DefenceInterceptions,
+		Stat.DefenceForcedFumbles,
 	],
 }

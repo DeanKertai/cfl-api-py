@@ -2,29 +2,29 @@ import requests
 import time
 import json
 from typing import List
-import lib.config as config
+from lib.config import Category, StatType, cfl_api_columns, column_types, category_api_names
+
+base_url = 'https://www.cfl.ca/wp-content/themes/cfl.ca/inc/admin-ajax.php?action=get_league_stats'
+rate_limit_interval = 1  # seconds
 
 
-def get_from_api(category: str, season: int) -> List[List]:
+def get_from_api(category: Category, year: int) -> List[List]:
 	"""
 	Gets player statistics from the CFL API for the specified category and season.
-	:param category: 'passing', 'rushing', 'receiving', etc.
-	:param season: The year to retrieve statistics for (e.g. 2024)
 	:return: A list of lists representing the rows (players) and columns (stats)
 	"""
-	print(f'Getting {category} stats for {season}...')
-	if category not in config.cfl_api_columns:
-		raise ValueError(f'Invalid category: {category}')
+	print(f'Getting {category.value} stats for {year}...')
 	
-	time.sleep(config.rate_limit_interval) # Prevent rate limiting
-	req = requests.get(f'{config.base_url}&stat_category={category}&season={season}')
+	time.sleep(rate_limit_interval) # Prevent rate limiting
+	api_category_str = category_api_names[category]
+	req = requests.get(f'{base_url}&stat_category={api_category_str}&season={year}')
 
 	if req.status_code != 200:
-		raise ValueError(f'Failed to get data for {category} and {season}. Status code: {req.status_code}')
+		raise ValueError(f'Failed to get data. Status code: {req.status_code}')
 
 	# Response should be `{data: [[...]...]}`
-	res_str = req.text
-	data: List[List] = json.loads(res_str)['data']
+	res_str = req.json()
+	data: List[List] = res_str['data']
 
 	# Validate the response format
 	if type(data) != list:
@@ -34,19 +34,20 @@ def get_from_api(category: str, season: int) -> List[List]:
 	if len(data) == 0:
 		return []
 	column_count = len(data[0])
-	if column_count != len(config.cfl_api_columns[category]):
-		expected = len(config.cfl_api_columns[category])
-		raise ValueError(f'Expected {expected} columns, but got {column_count}')
+	api_columns = cfl_api_columns[category]
+	expected_col_count = len(api_columns)
+	if column_count != expected_col_count:
+		raise ValueError(f'Expected {expected_col_count} columns, but got {column_count}')
 
-	for player in data:
-		if len(player) != column_count:
-			raise ValueError(f'Player has {len(player)} columns, but expected {column_count}')
-		for i, column in enumerate(player):
-			column_name = config.cfl_api_columns[category][i]
-			data_type = config.column_description[column_name]['type']
-			if type(column) == str and data_type == 'int':
-				player[i] = int(column)
-			if type(column) == str and data_type == 'float':
-				player[i] = float(column)
+	for player_cols in data:
+		if len(player_cols) != column_count:
+			raise ValueError(f'Player has {len(player_cols)} columns, but expected {column_count}')
+		for i, column in enumerate(player_cols):
+			column_stat = api_columns[i]
+			data_type = column_types[column_stat]
+			if type(column) == str and data_type == StatType.Int:
+				player_cols[i] = int(column)
+			if type(column) == str and data_type == StatType.Float:
+				player_cols[i] = float(column)
 
 	return data

@@ -1,20 +1,26 @@
 from lib.cfl_api import get_from_api
 from lib.player_db import PlayerDB
 from lib.player_list import load_all_players
+from lib.config import Category
 
-SEASON = 2024
-CATEGORIES = ['passing', 'rushing', 'receiving', 'defence', 'field_goals']
+SEASON_YEAR = 2024
 
 
 if __name__ == '__main__':
 	picked_players = load_all_players()
 
 	db = PlayerDB()
-	for category in CATEGORIES:
-		player_rows = get_from_api(category, SEASON)
+	for category in Category:
+		player_rows = get_from_api(category, SEASON_YEAR)
 		for player_cols in player_rows:
 			db.upsert(category, player_cols)
 	print(f'Added {db.size()} players to the database')
+
+	db.save_csv(Category.Passing, 'output/passing.csv')
+	db.save_csv(Category.Rushing, 'output/rushing.csv')
+	db.save_csv(Category.Receiving, 'output/receiving.csv')
+	db.save_csv(Category.FieldGoals, 'output/kickers.csv')
+	db.save_csv(Category.Defence, 'output/defence.csv')
 
 	# Find players that are picked, but not in the CFL player list. This
 	# could be due to an incorrect player ID, or a problem with the pick
