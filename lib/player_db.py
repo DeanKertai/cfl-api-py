@@ -1,3 +1,4 @@
+import os
 from typing import List, TypedDict, Dict, Any
 from lib import config
 from lib.config import Category, Stat, StatType, output_csv_cols, column_types
@@ -23,24 +24,6 @@ class PlayerDB:
 			if player['id'] == player_id:
 				return player
 		return None
-
-	def get_by_name(self, name: str) -> List[DbItem]:
-		"""
-		Returns the players with the specified name
-		"""
-		result = []
-		compare_name = name.lower().strip()
-		for player in self.list:
-			player_name = player['name'].lower().strip()
-			if player_name == compare_name:
-				result.append(player)
-		return result
-	
-	def get_all(self) -> List[DbItem]:
-		"""
-		Returns all players in the database.
-		"""
-		return self.list
 	
 	def get_stat(self, player_id: int, stat: Stat) -> Any:
 		"""
@@ -52,21 +35,12 @@ class PlayerDB:
 		return None
 	
 	def has_player(self, id: int) -> bool:
-		"""
-		Returns True if the player is in the database, False otherwise.
-		"""
 		return self.get_by_id(id) is not None
 	
 	def size(self) -> int:
-		"""
-		Returns the number of players in the database.
-		"""
 		return len(self.list)
 	
 	def set_picked_players(self, picked: List[Player]):
-		"""
-		Sets the list of picked players.
-		"""
 		self.picked_players = picked
 	
 	def save_csv(self, category: Category, filename: str) -> None:
@@ -78,6 +52,7 @@ class PlayerDB:
 			raise ValueError('Picked players must be set before saving to CSV')
 		filtered = [player for player in self.picked_players if player['category'] == category]
 		output_columns = output_csv_cols[category]
+		os.makedirs(os.path.dirname(filename), exist_ok=True)
 		with open(filename, 'w') as file:
 			for stat in output_columns:
 				column_name = stat.value
@@ -85,6 +60,7 @@ class PlayerDB:
 			file.write("\n")
 			for player in filtered:
 				if not self.has_player(player['id']):
+					file.write(f'\"{player["name"]}\", "No stats"\n')
 					continue
 				for stat in output_columns:
 					stat_value = self.get_stat(player['id'], stat)

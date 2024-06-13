@@ -13,3 +13,4 @@ This Python script grabs player statistics from the CFL website and parses it in
    ```bash
    python3 main.py
    ```
+1. Results will be saved to the `output/` folder

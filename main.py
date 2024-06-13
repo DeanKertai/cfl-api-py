@@ -12,7 +12,7 @@ if __name__ == '__main__':
 		player_rows = get_from_api(category, SEASON_YEAR)
 		for player_cols in player_rows:
 			db.upsert(category, player_cols)
-	print(f'Added {db.size()} players to the database')
+	print(f'Loaded stats for {db.size()} players')
 
 	picked_players = load_all_players()
 	db.set_picked_players(picked_players)

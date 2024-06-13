@@ -6,7 +6,6 @@ from lib.player import Player
 def load_all_players() -> List[Player]:
 	"""
 	Loads all players from the player list.
-	:return: A list of players.
 	"""
 	qb = load_player_list('picks/qb.txt', Category.Passing)
 	rb = load_player_list('picks/rb.txt', Category.Rushing)
@@ -18,7 +17,6 @@ def load_all_players() -> List[Player]:
 def load_player_list(file_path: str, category: Category) -> List[Player]:
 	"""
 	Loads the player list from the specified file.
-	:return: A list of players.
 	"""
 	players: List[Player] = []
 	with open(file_path, 'r') as file:
