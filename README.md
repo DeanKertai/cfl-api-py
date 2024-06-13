@@ -14,3 +14,29 @@ This Python script grabs player statistics from the CFL website and parses it in
    python3 main.py
    ```
 1. Results will be saved to the `output/` folder
+
+## Players
+
+Picked players must be listed in the following files:
+
+- `./picks/defence.txt`
+- `./picks/kickers.txt`
+- `./picks/qb.txt`
+- `./picks/rb.txt`
+- `./picks/wr.txt`
+
+Each player must be on their own line, and in this format:
+
+```
+<Player ID><tab><Team Initials><tab><Player name>
+```
+
+For example:
+
+```
+159730	BC	LOKOMBO, Boseko
+164128	BC	MESSAM, Isaiah
+163412	BC	SAYLES, Marcus
+```
+
+If a player is added or dropped, just update the player list txt files and run the script again
